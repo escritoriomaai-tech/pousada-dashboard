@@ -29,12 +29,12 @@
       border-radius: 20px; padding: 4px 11px; font-size: 0.75rem; color: #3a2a18;
     }
     .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .dot-green  { background: #22b87a; }
-    .dot-orange { background: #e88020; }
-    .dot-purple { background: #a050d8; }
-    .dot-red    { background: #e02828; }
-    .dot-gold   { background: #d8a010; }
-    #live { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #22884a; font-weight: 600; }
+    .dot-green  { background: #7DA87B; }
+    .dot-orange { background: #C4785A; }
+    .dot-purple { background: #9B88C4; }
+    .dot-red    { background: #A05C40; }
+    .dot-gold   { background: #B89A50; }
+    #live { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #4a7a48; font-weight: 600; }
     .pulse { width: 8px; height: 8px; background: #22884a; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 50% { opacity: 0.3; transform: scale(0.7); } }
 
@@ -64,11 +64,11 @@
       font-size: 0.63rem; font-weight: 700; padding: 2px 8px;
       border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
     }
-    .s-disponivel  { background: rgba(34,184,122,0.15); color: #168850; border: 1px solid rgba(34,184,122,0.3); }
-    .s-ocupado     { background: rgba(232,128,32,0.15); color: #a85010; border: 1px solid rgba(232,128,32,0.3); }
-    .s-limpeza     { background: rgba(160,80,216,0.15); color: #7030a0; border: 1px solid rgba(160,80,216,0.3); }
-    .s-manutencao  { background: rgba(224,40,40,0.15);  color: #a01010; border: 1px solid rgba(224,40,40,0.3); }
-    .s-reservado   { background: rgba(216,160,16,0.15); color: #906800; border: 1px solid rgba(216,160,16,0.3); }
+    .s-disponivel  { background: rgba(125,168,123,0.15); color: #3a6e38; border: 1px solid rgba(125,168,123,0.4); }
+    .s-ocupado     { background: rgba(196,120,90,0.15);  color: #7a3a1e; border: 1px solid rgba(196,120,90,0.4); }
+    .s-limpeza     { background: rgba(155,136,196,0.15); color: #4a3080; border: 1px solid rgba(155,136,196,0.4); }
+    .s-manutencao  { background: rgba(160,92,64,0.15);   color: #6a2e10; border: 1px solid rgba(160,92,64,0.4); }
+    .s-reservado   { background: rgba(184,154,80,0.15);  color: #6a4e10; border: 1px solid rgba(184,154,80,0.4); }
 
     .cleaning-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #7a5a3a; }
     .clean-dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; display: inline-block; }
@@ -134,11 +134,11 @@
 </div>
 
 <div id="legend">
-  <div class="legend-item"><div class="legend-color" style="background:#22b87a"></div>Disponível</div>
-  <div class="legend-item"><div class="legend-color" style="background:#e88020"></div>Ocupado</div>
-  <div class="legend-item"><div class="legend-color" style="background:#a050d8"></div>Limpeza</div>
-  <div class="legend-item"><div class="legend-color" style="background:#e02828"></div>Manutenção</div>
-  <div class="legend-item"><div class="legend-color" style="background:#d8a010"></div>Reservado</div>
+  <div class="legend-item"><div class="legend-color" style="background:#7da87b"></div>Disponível</div>
+  <div class="legend-item"><div class="legend-color" style="background:#c4785a"></div>Ocupado</div>
+  <div class="legend-item"><div class="legend-color" style="background:#9b88c4"></div>Limpeza</div>
+  <div class="legend-item"><div class="legend-color" style="background:#a05c40"></div>Manutenção</div>
+  <div class="legend-item"><div class="legend-color" style="background:#b89a50"></div>Reservado</div>
 </div>
 
 <div id="hint">Clique numa suíte para ver detalhes • Arraste para girar • Scroll para zoom</div>
@@ -161,19 +161,19 @@ let allData = null;
 let selectedRoom = null;
 
 const STATUS_COLORS = {
-  disponivel:  0x22b87a,
-  ocupado:     0xe88020,
-  limpeza:     0xa050d8,
-  manutencao:  0xe02828,
-  reservado:   0xd8a010
+  disponivel:  0x7da87b,
+  ocupado:     0xc4785a,
+  limpeza:     0x9b88c4,
+  manutencao:  0xa05c40,
+  reservado:   0xb89a50
 };
 const STATUS_LABELS = {
   disponivel: 'Disponível', ocupado: 'Ocupado',
   limpeza: 'Limpeza', manutencao: 'Manutenção', reservado: 'Reservado'
 };
 const STATUS_CSS = {
-  disponivel: '#168850', ocupado: '#a85010',
-  limpeza: '#7030a0', manutencao: '#a01010', reservado: '#906800'
+  disponivel: '#3a6e38', ocupado: '#7a3a1e',
+  limpeza: '#4a3080', manutencao: '#6a2e10', reservado: '#6a4e10'
 };
 
 // Layout: 2 fileiras de 4 quartos em U, jardim central
@@ -281,7 +281,7 @@ function buildGarden() {
   // Grama
   const garden = new THREE.Mesh(
     new THREE.PlaneGeometry(18, 8),
-    new THREE.MeshStandardMaterial({ color: 0x90c860, roughness: 0.9 })
+    new THREE.MeshStandardMaterial({ color: 0x9cb89a, roughness: 0.9 })
   );
   garden.rotation.x = -Math.PI / 2;
   garden.position.set(0, 0.02, 0);
@@ -495,14 +495,14 @@ function createRoomMesh(room) {
   if (room.cleaning?.status === 'pendente') {
     const alertMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xe02828 })
+      new THREE.MeshBasicMaterial({ color: 0xa05c40 })
     );
     alertMesh.position.set(1.6, 3.0, 0);
     group.add(alertMesh);
   } else if (room.cleaning?.status === 'em_andamento') {
     const inProg = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xa050d8 })
+      new THREE.MeshBasicMaterial({ color: 0x9b88c4 })
     );
     inProg.position.set(1.6, 3.0, 0);
     group.add(inProg);
