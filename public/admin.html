@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Equipe — Pousada Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #f0ebe0; --surface: #f8f3ea; --border: rgba(140,100,60,0.18);
+      --text: #2a2018; --muted: #9a7050;
+      --green: #22b87a; --orange: #e88020; --purple: #a050d8; --red: #e02828; --gold: #d8a010;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding-bottom: 80px; }
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 1rem; font-weight: 700; color: #7a4a1a; }
+    .ws-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); }
+    .ws-dot.on { background: var(--green); animation: blink 1.5s infinite; }
+    @keyframes blink { 50% { opacity: 0.3; } }
+    #ws-label { font-size: 0.7rem; color: var(--muted); }
+
+    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); padding: 24px; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 360px; }
+    .login-card h2 { font-size: 1.1rem; margin-bottom: 6px; color: var(--text); }
+    .login-card p { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
+
+    label { font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; background: rgba(255,255,255,0.6); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; margin-bottom: 14px; }
+    input:focus, select:focus { border-color: var(--orange); background: rgba(255,255,255,0.9); }
+    select option { background: #f8f3ea; }
+
+    .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--orange); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-secondary { background: rgba(0,0,0,0.06); color: var(--text); border: 1px solid var(--border); }
+
+    #app-screen { display: none; padding: 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: var(--surface); padding: 4px; border-radius: 10px; }
+    .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: var(--muted); border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .tab-btn.active { background: var(--orange); color: #fff; }
+
+    .room-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .room-title { font-size: 0.95rem; font-weight: 700; }
+    .status-badge { font-size: 0.63rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; }
+    .s-disponivel  { background: rgba(34,184,122,0.15); color: #168850; }
+    .s-ocupado     { background: rgba(232,128,32,0.15); color: #a85010; }
+    .s-limpeza     { background: rgba(160,80,216,0.15); color: #7030a0; }
+    .s-manutencao  { background: rgba(224,40,40,0.15);  color: #a01010; }
+    .s-reservado   { background: rgba(216,160,16,0.15); color: #906800; }
+
+    .clean-status { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid rgba(0,0,0,0.07); font-size: 0.82rem; }
+    .action-btns { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .action-btn { flex: 1; min-width: 100px; padding: 9px 8px; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-clean { background: rgba(160,80,216,0.12); color: #7030a0; border: 1px solid rgba(160,80,216,0.25); }
+    .btn-done  { background: rgba(34,184,122,0.12); color: #168850; border: 1px solid rgba(34,184,122,0.25); }
+    .btn-ocup  { background: rgba(232,128,32,0.12); color: #a85010; border: 1px solid rgba(232,128,32,0.25); }
+    .btn-livre { background: rgba(34,184,122,0.12); color: #168850; border: 1px solid rgba(34,184,122,0.25); }
+    .btn-maint { background: rgba(224,40,40,0.12); color: #a01010; border: 1px solid rgba(224,40,40,0.25); }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+    .stat-num { font-size: 1.5rem; font-weight: 800; }
+    .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(34,184,122,0.15); border: 1px solid var(--green); color: #168850; padding: 10px 20px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; opacity: 0; transition: opacity 0.3s; z-index: 999; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+    #toast.error { background: rgba(224,40,40,0.1); border-color: var(--red); color: #a01010; }
+    .err { font-size: 0.8rem; color: var(--red); margin-top: -10px; margin-bottom: 10px; display: none; }
+    .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<div class="header">
+  <h1>🌿 Equipe — Pousada</h1>
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="ws-dot" id="ws-dot"></div>
+    <span id="ws-label">Conectando...</span>
+  </div>
+</div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Acesso da Equipe</h2>
+    <p>Digite a senha para acessar o painel de controle</p>
+    <label>Senha</label>
+    <input type="password" id="pwd-input" placeholder="••••••••">
+    <div class="err" id="pwd-err">Senha incorreta.</div>
+    <button class="btn btn-primary" id="login-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-screen">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="quartos">Quartos</button>
+    <button class="tab-btn" data-tab="resumo">Resumo</button>
+  </div>
+
+  <div id="tab-quartos"></div>
+
+  <div id="tab-resumo" style="display:none">
+    <div class="section-title">Resumo da pousada</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" style="color:#22b87a" id="sr-disp">0</div><div class="stat-label">Disponível</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#e88020" id="sr-ocup">0</div><div class="stat-label">Ocupado</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#a050d8" id="sr-limp">0</div><div class="stat-label">Em limpeza</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#e02828" id="sr-manu">0</div><div class="stat-label">Manutenção</div></div>
+    </div>
+    <div class="stat-card" style="margin-bottom:12px;text-align:center">
+      <div class="stat-num" style="color:#d8a010" id="sr-rese">0</div>
+      <div class="stat-label">Reservados (chegada futura)</div>
+    </div>
+    <div class="room-card">
+      <div class="section-title">Limpezas pendentes</div>
+      <div id="sr-pendentes"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let password = '';
+let allData = null;
+let ws = null;
+const STATUS_LABELS = { disponivel:'Disponível', ocupado:'Ocupado', limpeza:'Limpeza', manutencao:'Manutenção', reservado:'Reservado' };
+const CLEAN_LABELS = { feita:'✅ Feita', em_andamento:'🧹 Em andamento', pendente:'⚠️ Pendente' };
+const STAFF = ['Marta', 'Ana', 'Beatriz'];
+
+// Auth
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const pwd = document.getElementById('pwd-input').value;
+  if (!pwd) return;
+  try {
+    const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pwd }) });
+    if (!r.ok) throw new Error();
+    password = pwd;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    connectWS();
+  } catch { document.getElementById('pwd-err').style.display = 'block'; }
+});
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-btn').click(); });
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+    document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+  });
+});
+
+// WS
+function connectWS() {
+  const prot = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${prot}//${location.host}`);
+  ws.onopen = () => setWS(true);
+  ws.onclose = () => { setWS(false); setTimeout(connectWS, 3000); };
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'connected' || msg.type === 'update') {
+      allData = msg.data;
+      renderQuartos();
+      renderResumo();
+    }
+  };
+}
+function setWS(ok) {
+  document.getElementById('ws-dot').className = 'ws-dot' + (ok ? ' on' : '');
+  document.getElementById('ws-label').textContent = ok ? 'Ao vivo' : 'Reconectando...';
+}
+
+function renderQuartos() {
+  if (!allData) return;
+  const container = document.getElementById('tab-quartos');
+  container.innerHTML = '';
+  allData.rooms.forEach(room => {
+    const card = document.createElement('div');
+    card.className = 'room-card';
+    const guestLine = room.guest
+      ? `<div style="font-size:0.8rem;color:#7a5a3a;margin-bottom:8px">👤 ${room.guest} &nbsp;•&nbsp; ${room.checkIn} → ${room.checkOut}</div>`
+      : `<div style="font-size:0.8rem;color:#b09070;margin-bottom:8px">Sem hóspede</div>`;
+    const noteLine = room.notes ? `<div style="font-size:0.75rem;color:#8a6040;background:rgba(255,240,200,0.5);padding:5px 8px;border-radius:6px;margin-bottom:8px">📌 ${room.notes}</div>` : '';
+    card.innerHTML = `
+      <div class="room-header">
+        <div class="room-title">Nº ${room.number} — ${room.name}</div>
+        <div class="status-badge s-${room.status}">${STATUS_LABELS[room.status]}</div>
+      </div>
+      ${guestLine}${noteLine}
+      <div class="clean-status">
+        <span>🧹 Limpeza: <strong>${CLEAN_LABELS[room.cleaning?.status] || '—'}</strong>${room.cleaning?.by ? ' — ' + room.cleaning.by : ''}</span>
+      </div>
+      <div class="action-btns">
+        <button class="action-btn btn-clean" data-id="${room.id}" data-action="iniciar_limpeza">🧹 Iniciar limpeza</button>
+        <button class="action-btn btn-done"  data-id="${room.id}" data-action="limpeza_feita">✅ Limpeza pronta</button>
+        <button class="action-btn btn-livre" data-id="${room.id}" data-action="disponivel">🏠 Disponível</button>
+        <button class="action-btn btn-ocup"  data-id="${room.id}" data-action="ocupar">👤 Ocupar</button>
+        <button class="action-btn btn-maint" data-id="${room.id}" data-action="manutencao">🔧 Manutenção</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Listeners
+  container.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const room = allData.rooms.find(r => r.id === id);
+      if (!room) return;
+      let payload = {};
+      if (action === 'iniciar_limpeza') {
+        payload = { status: 'limpeza', cleaning: { status: 'em_andamento', by: STAFF[0], at: new Date().toISOString() } };
+      } else if (action === 'limpeza_feita') {
+        payload = { cleaning: { status: 'feita', by: room.cleaning?.by || STAFF[0], at: new Date().toISOString() } };
+        if (room.status === 'limpeza') payload.status = 'disponivel';
+      } else if (action === 'disponivel') {
+        payload = { status: 'disponivel', guest: null, checkIn: null, checkOut: null };
+      } else if (action === 'ocupar') {
+        const nome = prompt('Nome do hóspede:');
+        if (!nome) return;
+        const ci = prompt('Check-in (AAAA-MM-DD):', new Date().toISOString().slice(0,10));
+        const co = prompt('Check-out (AAAA-MM-DD):');
+        payload = { status: 'ocupado', guest: nome, checkIn: ci, checkOut: co, cleaning: { status: 'pendente', by: null, at: null } };
+      } else if (action === 'manutencao') {
+        payload = { status: 'manutencao' };
+      }
+      try {
+        const r = await fetch(`/api/rooms/${id}`, { method:'PUT', headers:{'Content-Type':'application/json', password}, body: JSON.stringify(payload) });
+        if (!r.ok) throw new Error();
+        showToast('✅ Suíte atualizada');
+      } catch { showToast('❌ Erro ao atualizar', true); }
+    });
+  });
+}
+
+function renderResumo() {
+  if (!allData?.stats) return;
+  const s = allData.stats;
+  document.getElementById('sr-disp').textContent = s.disponivel || 0;
+  document.getElementById('sr-ocup').textContent = s.ocupado || 0;
+  document.getElementById('sr-limp').textContent = s.limpeza || 0;
+  document.getElementById('sr-manu').textContent = s.manutencao || 0;
+  document.getElementById('sr-rese').textContent = s.reservado || 0;
+  const pend = document.getElementById('sr-pendentes');
+  if (!pend) return;
+  const rooms = allData.rooms.filter(r => r.cleaning?.status === 'pendente');
+  pend.innerHTML = rooms.length === 0
+    ? '<div style="font-size:0.82rem;color:#9a7050">Nenhuma limpeza pendente ✅</div>'
+    : rooms.map(r => `<div style="padding:5px 0;border-top:1px solid rgba(0,0,0,0.07);font-size:0.82rem">⚠️ Nº ${r.number} — ${r.name} <span style="color:#9a7050">(${STATUS_LABELS[r.status]})</span></div>`).join('');
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = '', 2500);
+}
+</script>
+</body>
+</html>

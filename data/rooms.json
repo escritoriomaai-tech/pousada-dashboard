@@ -1,0 +1,66 @@
+{
+  "updatedAt": "2026-11-06T10:00:00.000Z",
+  "pousada": { "name": "Pousada Serra Verde", "totalRooms": 8 },
+  "rooms": [
+    {
+      "id": "S01", "number": 1, "name": "Suíte Orquídea",
+      "status": "ocupado",
+      "guest": "Camila Ferreira", "checkIn": "2026-11-05", "checkOut": "2026-11-08",
+      "cleaning": { "status": "feita", "by": "Marta", "at": "2026-11-06T09:00:00.000Z" },
+      "notes": "Hóspede pediu travesseiro extra"
+    },
+    {
+      "id": "S02", "number": 2, "name": "Suíte Bromélia",
+      "status": "limpeza",
+      "guest": null, "checkIn": null, "checkOut": null,
+      "cleaning": { "status": "em_andamento", "by": "Ana", "at": "2026-11-06T10:15:00.000Z" },
+      "notes": ""
+    },
+    {
+      "id": "S03", "number": 3, "name": "Suíte Ipê",
+      "status": "disponivel",
+      "guest": null, "checkIn": null, "checkOut": null,
+      "cleaning": { "status": "feita", "by": "Marta", "at": "2026-11-06T08:30:00.000Z" },
+      "notes": ""
+    },
+    {
+      "id": "S04", "number": 4, "name": "Suíte Palmeira",
+      "status": "reservado",
+      "guest": "Roberto Lima", "checkIn": "2026-11-07", "checkOut": "2026-11-10",
+      "cleaning": { "status": "feita", "by": "Ana", "at": "2026-11-06T08:45:00.000Z" },
+      "notes": "Chegada prevista às 15h"
+    },
+    {
+      "id": "S05", "number": 5, "name": "Suíte Mangueira",
+      "status": "ocupado",
+      "guest": "Juliana Costa", "checkIn": "2026-11-04", "checkOut": "2026-11-07",
+      "cleaning": { "status": "pendente", "by": null, "at": null },
+      "notes": "Não perturbar até 11h"
+    },
+    {
+      "id": "S06", "number": 6, "name": "Suíte Sapucaia",
+      "status": "manutencao",
+      "guest": null, "checkIn": null, "checkOut": null,
+      "cleaning": { "status": "pendente", "by": null, "at": null },
+      "notes": "Ar-condicionado com defeito — técnico agendado"
+    },
+    {
+      "id": "S07", "number": 7, "name": "Suíte Jatobá",
+      "status": "limpeza",
+      "guest": null, "checkIn": null, "checkOut": null,
+      "cleaning": { "status": "em_andamento", "by": "Marta", "at": "2026-11-06T10:40:00.000Z" },
+      "notes": ""
+    },
+    {
+      "id": "S08", "number": 8, "name": "Suíte Cedro",
+      "status": "disponivel",
+      "guest": null, "checkIn": null, "checkOut": null,
+      "cleaning": { "status": "feita", "by": "Ana", "at": "2026-11-06T09:20:00.000Z" },
+      "notes": ""
+    }
+  ],
+  "stats": {
+    "ocupado": 2, "disponivel": 2, "limpeza": 2, "manutencao": 1, "reservado": 1,
+    "staff": ["Marta", "Ana"]
+  }
+}

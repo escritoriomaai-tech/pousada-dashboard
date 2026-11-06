@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  pousada:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3001
+      - ADMIN_PASSWORD=pousada2024
+    restart: unless-stopped

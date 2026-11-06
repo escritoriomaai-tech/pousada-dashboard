@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard 3D — Pousada</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f0ebe0;
+      color: #2a2018;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden; height: 100vh; width: 100vw;
+    }
+    #header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(248,243,234,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(140,100,60,0.15);
+      padding: 10px 24px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #header h1 { font-size: 1.1rem; font-weight: 700; color: #7a4a1a; letter-spacing: 0.3px; }
+    #header h1 span { color: #2a2018; }
+    #stats-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .stat-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 20px; padding: 4px 11px; font-size: 0.75rem; color: #3a2a18;
+    }
+    .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-green  { background: #22b87a; }
+    .dot-orange { background: #e88020; }
+    .dot-purple { background: #a050d8; }
+    .dot-red    { background: #e02828; }
+    .dot-gold   { background: #d8a010; }
+    #live { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #22884a; font-weight: 600; }
+    .pulse { width: 8px; height: 8px; background: #22884a; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 50% { opacity: 0.3; transform: scale(0.7); } }
+
+    #canvas-container { position: fixed; top: 56px; left: 0; right: 320px; bottom: 0; }
+
+    #info-panel {
+      position: fixed; top: 56px; right: 0; width: 320px; bottom: 0;
+      background: rgba(248,243,234,0.97);
+      border-left: 1px solid rgba(140,100,60,0.15);
+      overflow-y: auto; padding: 18px;
+    }
+    .panel-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: #a07040; margin-bottom: 14px; }
+
+    .room-card {
+      background: rgba(255,255,255,0.7); border: 1px solid rgba(140,100,60,0.12);
+      border-radius: 10px; padding: 12px; margin-bottom: 10px;
+      box-shadow: 0 1px 4px rgba(100,60,20,0.07); cursor: pointer; transition: border-color 0.2s;
+    }
+    .room-card:hover { border-color: rgba(140,100,60,0.3); }
+    .room-card.selected { border-color: rgba(224,128,32,0.5); background: rgba(224,128,32,0.06); }
+    .room-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .room-num { font-size: 1rem; font-weight: 700; color: #2a2018; }
+    .room-name { font-size: 0.75rem; color: #9a7050; margin-bottom: 4px; }
+    .room-guest { font-size: 0.82rem; color: #3a2a18; margin-bottom: 6px; }
+
+    .status-badge {
+      font-size: 0.63rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+    .s-disponivel  { background: rgba(34,184,122,0.15); color: #168850; border: 1px solid rgba(34,184,122,0.3); }
+    .s-ocupado     { background: rgba(232,128,32,0.15); color: #a85010; border: 1px solid rgba(232,128,32,0.3); }
+    .s-limpeza     { background: rgba(160,80,216,0.15); color: #7030a0; border: 1px solid rgba(160,80,216,0.3); }
+    .s-manutencao  { background: rgba(224,40,40,0.15);  color: #a01010; border: 1px solid rgba(224,40,40,0.3); }
+    .s-reservado   { background: rgba(216,160,16,0.15); color: #906800; border: 1px solid rgba(216,160,16,0.3); }
+
+    .cleaning-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #7a5a3a; }
+    .clean-dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; display: inline-block; }
+    .clean-feita      { background: #22b87a; }
+    .clean-em_andamento { background: #a050d8; }
+    .clean-pendente   { background: #e02828; }
+
+    .detail-row { font-size: 0.74rem; color: #9a7050; margin-top: 4px; }
+    .notes-box {
+      margin-top: 8px; background: rgba(255,240,200,0.5); border: 1px solid rgba(200,160,80,0.2);
+      border-radius: 6px; padding: 6px 9px; font-size: 0.74rem; color: #6a4a20;
+    }
+
+    #tooltip {
+      position: fixed; background: rgba(248,243,234,0.98);
+      border: 1px solid rgba(140,100,60,0.2); border-radius: 8px;
+      padding: 10px 14px; pointer-events: none; z-index: 200; display: none;
+      max-width: 210px; box-shadow: 0 4px 16px rgba(100,60,20,0.14);
+    }
+    #tooltip .tt-name  { font-weight: 700; font-size: 0.9rem; color: #2a2018; }
+    #tooltip .tt-guest { font-size: 0.78rem; color: #7a5a3a; margin-top: 2px; }
+    #tooltip .tt-st    { font-size: 0.75rem; margin-top: 4px; }
+
+    #legend {
+      position: fixed; bottom: 18px; left: 18px; display: flex; gap: 12px;
+      background: rgba(248,243,234,0.92); border: 1px solid rgba(140,100,60,0.12);
+      border-radius: 8px; padding: 7px 13px; font-size: 0.7rem;
+      box-shadow: 0 2px 8px rgba(100,60,20,0.1);
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; color: #6a4a2a; }
+    .legend-color { width: 11px; height: 11px; border-radius: 2px; }
+    #hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: #b09070; pointer-events: none; }
+
+    #info-panel::-webkit-scrollbar { width: 4px; }
+    #info-panel::-webkit-scrollbar-thumb { background: rgba(140,100,60,0.2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🌿 <span>Pousada</span> Dashboard 3D</h1>
+  <div id="stats-bar">
+    <div class="stat-pill"><div class="stat-dot dot-green"></div><span id="st-disponivel">0</span> Disponível</div>
+    <div class="stat-pill"><div class="stat-dot dot-orange"></div><span id="st-ocupado">0</span> Ocupado</div>
+    <div class="stat-pill"><div class="stat-dot dot-purple"></div><span id="st-limpeza">0</span> Limpeza</div>
+    <div class="stat-pill"><div class="stat-dot dot-red"></div><span id="st-manutencao">0</span> Manutenção</div>
+    <div class="stat-pill"><div class="stat-dot dot-gold"></div><span id="st-reservado">0</span> Reservado</div>
+  </div>
+  <div id="live"><div class="pulse"></div>AO VIVO</div>
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="info-panel">
+  <div class="panel-title">Suítes</div>
+  <div id="rooms-list"></div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-guest" id="tt-guest"></div>
+  <div class="tt-st" id="tt-st"></div>
+</div>
+
+<div id="legend">
+  <div class="legend-item"><div class="legend-color" style="background:#22b87a"></div>Disponível</div>
+  <div class="legend-item"><div class="legend-color" style="background:#e88020"></div>Ocupado</div>
+  <div class="legend-item"><div class="legend-color" style="background:#a050d8"></div>Limpeza</div>
+  <div class="legend-item"><div class="legend-color" style="background:#e02828"></div>Manutenção</div>
+  <div class="legend-item"><div class="legend-color" style="background:#d8a010"></div>Reservado</div>
+</div>
+
+<div id="hint">Clique numa suíte para ver detalhes • Arraste para girar • Scroll para zoom</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+let scene, camera, renderer, controls;
+let roomMeshes = {};
+let allData = null;
+let selectedRoom = null;
+
+const STATUS_COLORS = {
+  disponivel:  0x22b87a,
+  ocupado:     0xe88020,
+  limpeza:     0xa050d8,
+  manutencao:  0xe02828,
+  reservado:   0xd8a010
+};
+const STATUS_LABELS = {
+  disponivel: 'Disponível', ocupado: 'Ocupado',
+  limpeza: 'Limpeza', manutencao: 'Manutenção', reservado: 'Reservado'
+};
+const STATUS_CSS = {
+  disponivel: '#168850', ocupado: '#a85010',
+  limpeza: '#7030a0', manutencao: '#a01010', reservado: '#906800'
+};
+
+// Layout: 2 fileiras de 4 quartos em U, jardim central
+// Fileira A (topo): quartos 1-4, z = -5.5
+// Fileira B (baixo): quartos 5-8, z = +5.5
+// Jardim/piscina: centro
+function getRoomPos(num) {
+  const xs = [-7.5, -2.5, 2.5, 7.5];
+  if (num <= 4) return { x: xs[num - 1], z: -5.5, facingSouth: true };
+  else          return { x: xs[num - 5], z:  5.5, facingSouth: false };
+}
+
+function initThree() {
+  const container = document.getElementById('canvas-container');
+  const W = container.clientWidth, H = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xeae4d8);
+  scene.fog = new THREE.FogExp2(0xeae4d8, 0.018);
+
+  camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+  camera.position.set(0, 14, 18);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.07;
+  controls.minDistance = 6;
+  controls.maxDistance = 35;
+  controls.maxPolarAngle = Math.PI / 2.1;
+  controls.target.set(0, 0, 0);
+
+  // Luzes
+  scene.add(new THREE.AmbientLight(0xfff4e8, 2.8));
+  const sun = new THREE.DirectionalLight(0xfff8e8, 2.5);
+  sun.position.set(8, 16, 10);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -20; sun.shadow.camera.right = 20;
+  sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
+  sun.shadow.camera.far = 50;
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xd0eeff, 0.5);
+  fill.position.set(-6, 8, -8);
+  scene.add(fill);
+
+  buildGround();
+  buildStructure();
+
+  window.addEventListener('resize', () => {
+    const W = container.clientWidth, H = container.clientHeight;
+    camera.aspect = W / H; camera.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  });
+  renderer.domElement.addEventListener('mousemove', onMouseMove);
+  renderer.domElement.addEventListener('click', onClick);
+  animate();
+}
+
+function buildGround() {
+  // Chão geral (terra/grama)
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.MeshStandardMaterial({ color: 0xd4c8a8, roughness: 0.95 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Calçada/corredor central
+  [-1.5, 1.5].forEach(z => {
+    const path = new THREE.Mesh(
+      new THREE.PlaneGeometry(32, 3),
+      new THREE.MeshStandardMaterial({ color: 0xe0d8c8, roughness: 0.8 })
+    );
+    path.rotation.x = -Math.PI / 2;
+    path.position.set(0, 0.01, z > 0 ? 3.5 : -3.5);
+    path.receiveShadow = true;
+    scene.add(path);
+  });
+
+  // Corredor lateral (conecta as duas fileiras)
+  [-12, 12].forEach(x => {
+    const side = new THREE.Mesh(
+      new THREE.PlaneGeometry(3, 20),
+      new THREE.MeshStandardMaterial({ color: 0xe0d8c8, roughness: 0.8 })
+    );
+    side.rotation.x = -Math.PI / 2;
+    side.position.set(x, 0.01, 0);
+    side.receiveShadow = true;
+    scene.add(side);
+  });
+
+  // Jardim central com piscina
+  buildGarden();
+}
+
+function buildGarden() {
+  // Grama
+  const garden = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 8),
+    new THREE.MeshStandardMaterial({ color: 0x90c860, roughness: 0.9 })
+  );
+  garden.rotation.x = -Math.PI / 2;
+  garden.position.set(0, 0.02, 0);
+  scene.add(garden);
+
+  // Piscina
+  const pool = new THREE.Mesh(
+    new THREE.BoxGeometry(6, 0.15, 3.5),
+    new THREE.MeshStandardMaterial({ color: 0x40b8e0, roughness: 0.1, metalness: 0.1 })
+  );
+  pool.position.set(0, 0.02, 0);
+  scene.add(pool);
+
+  // Borda da piscina
+  const rim = new THREE.Mesh(
+    new THREE.BoxGeometry(6.4, 0.08, 3.9),
+    new THREE.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.7 })
+  );
+  rim.position.set(0, 0.1, 0);
+  scene.add(rim);
+
+  // Palmeiras decorativas
+  [[-5, -2], [5, 2], [-5, 2], [5, -2]].forEach(([px, pz]) => {
+    // Tronco
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.14, 2.2, 8),
+      new THREE.MeshStandardMaterial({ color: 0xb88040, roughness: 0.9 })
+    );
+    trunk.position.set(px, 1.1, pz);
+    trunk.castShadow = true;
+    scene.add(trunk);
+    // Copa
+    const top = new THREE.Mesh(
+      new THREE.SphereGeometry(0.8, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0x40a830, roughness: 0.9 })
+    );
+    top.position.set(px, 2.6, pz);
+    top.castShadow = true;
+    scene.add(top);
+  });
+
+  // Espreguiçadeiras
+  [[-2, 2.8], [0, 2.8], [2, 2.8], [-2, -2.8], [0, -2.8], [2, -2.8]].forEach(([lx, lz]) => {
+    const chair = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.08, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0xf0c860, roughness: 0.8 })
+    );
+    chair.position.set(lx, 0.14, lz);
+    scene.add(chair);
+  });
+}
+
+function buildStructure() {
+  // Recepção (lado esquerdo)
+  const recep = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 3, 5),
+    new THREE.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.8 })
+  );
+  recep.position.set(-13.5, 1.5, 0);
+  recep.castShadow = true; recep.receiveShadow = true;
+  scene.add(recep);
+  // Telhado recepção
+  addRoof(-13.5, 3, 0, 4.2, 5.2, 0xc8a870);
+  // Placa "Recepção"
+  addLabel3D('Recepção', -13.5, 3.5, 0, 0.6, 0xfff4e0, '#7a4a1a');
+}
+
+function addRoof(x, y, z, w, d, color) {
+  const geo = new THREE.CylinderGeometry(0, w * 0.75, 1.2, 4);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.8 });
+  const roof = new THREE.Mesh(geo, mat);
+  roof.position.set(x, y + 0.6, z);
+  roof.rotation.y = Math.PI / 4;
+  roof.castShadow = true;
+  scene.add(roof);
+}
+
+function addLabel3D(text, x, y, z, scale, bgColor, textColor) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = bgColor;
+  ctx.roundRect(4, 8, 248, 48, 8);
+  ctx.fill();
+  ctx.fillStyle = textColor;
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(scale * 4, scale),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+  );
+  mesh.position.set(x, y, z);
+  mesh.userData.isLabel = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+// --- Quartos ---
+function buildRooms(data) {
+  Object.values(roomMeshes).forEach(g => scene.remove(g));
+  roomMeshes = {};
+  if (!data?.rooms) return;
+  data.rooms.forEach(room => {
+    const mesh = createRoomMesh(room);
+    scene.add(mesh);
+    roomMeshes[room.id] = mesh;
+  });
+}
+
+function createRoomMesh(room) {
+  const color = STATUS_COLORS[room.status] || 0xcccccc;
+  const { x, z, facingSouth } = getRoomPos(room.number);
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  group.userData = { roomId: room.id };
+
+  // Base (platform)
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(4.0, 0.12, 4.8),
+    new THREE.MeshStandardMaterial({ color: 0xe0d8c8, roughness: 0.9 })
+  );
+  base.position.y = 0.06;
+  base.receiveShadow = true;
+  group.add(base);
+
+  // Paredes do quarto
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf4f0e8, roughness: 0.85 });
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.4, 4.4), wallMat);
+  walls.position.y = 1.32;
+  walls.castShadow = true; walls.receiveShadow = true;
+  group.add(walls);
+
+  // Teto colorido com status
+  const roofColor = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.0 });
+  const roofBase = new THREE.Mesh(new THREE.BoxGeometry(3.65, 0.08, 4.45), roofColor);
+  roofBase.position.y = 2.56;
+  group.add(roofBase);
+
+  // Telhado (pirâmide)
+  const roofGeo = new THREE.CylinderGeometry(0, 2.6, 1.2, 4);
+  const roofMesh = new THREE.Mesh(roofGeo,
+    new THREE.MeshStandardMaterial({ color: 0xb87840, roughness: 0.8 })
+  );
+  roofMesh.position.y = 3.2;
+  roofMesh.rotation.y = Math.PI / 4;
+  roofMesh.castShadow = true;
+  group.add(roofMesh);
+
+  // Porta (direção depende da fileira)
+  const doorZ = facingSouth ? 2.2 : -2.2;
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 1.6, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x8a5820, roughness: 0.7 })
+  );
+  door.position.set(0, 0.92, doorZ);
+  group.add(door);
+
+  // Janela com brilho de status
+  const winMat = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.35,
+    roughness: 0.1,
+    transparent: true, opacity: 0.8
+  });
+  [-1.0, 1.0].forEach(wx => {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.07), winMat);
+    win.position.set(wx, 1.5, doorZ);
+    group.add(win);
+  });
+
+  // Luz de piso colorida
+  const glow = new THREE.PointLight(color, 0.4, 3.5);
+  glow.position.set(0, 0.5, 0);
+  group.add(glow);
+
+  // Anel no chão
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(1.0, 1.25, 32),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.03;
+  group.add(ring);
+
+  // Número da suíte
+  const numCanvas = document.createElement('canvas');
+  numCanvas.width = 256; numCanvas.height = 80;
+  const ctx = numCanvas.getContext('2d');
+  ctx.fillStyle = 'rgba(255,250,240,0.95)';
+  ctx.roundRect(4, 8, 248, 64, 10); ctx.fill();
+  ctx.fillStyle = '#3a2010';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(`Nº ${room.number}  •  ${room.name}`, 128, 32);
+  ctx.fillStyle = STATUS_CSS[room.status] || '#333';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText(STATUS_LABELS[room.status] || room.status, 128, 56);
+  const numTex = new THREE.CanvasTexture(numCanvas);
+  const numMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.2, 1.0),
+    new THREE.MeshBasicMaterial({ map: numTex, transparent: true })
+  );
+  numMesh.position.set(0, 4.5, 0);
+  numMesh.userData.isLabel = true;
+  group.add(numMesh);
+
+  // Ícone de limpeza
+  if (room.cleaning?.status === 'pendente') {
+    const alertMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xe02828 })
+    );
+    alertMesh.position.set(1.6, 3.0, 0);
+    group.add(alertMesh);
+  } else if (room.cleaning?.status === 'em_andamento') {
+    const inProg = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xa050d8 })
+    );
+    inProg.position.set(1.6, 3.0, 0);
+    group.add(inProg);
+  }
+
+  return group;
+}
+
+// --- Raycasting ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function getRoomFromEvent(e) {
+  const container = document.getElementById('canvas-container');
+  const rect = container.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const objs = [];
+  Object.values(roomMeshes).forEach(g => g.traverse(c => { if (c.isMesh && !c.userData.isLabel) objs.push(c); }));
+  const hits = raycaster.intersectObjects(objs);
+  if (!hits.length) return null;
+  let obj = hits[0].object;
+  while (obj && !obj.userData.roomId) obj = obj.parent;
+  return allData?.rooms.find(r => r.id === obj?.userData.roomId) || null;
+}
+
+function onMouseMove(e) {
+  const room = getRoomFromEvent(e);
+  const tt = document.getElementById('tooltip');
+  if (room) {
+    document.body.style.cursor = 'pointer';
+    tt.style.display = 'block';
+    tt.style.left = (e.clientX + 14) + 'px';
+    tt.style.top = (e.clientY - 10) + 'px';
+    document.getElementById('tt-name').textContent = `${room.number} — ${room.name}`;
+    document.getElementById('tt-guest').textContent = room.guest ? `👤 ${room.guest}` : 'Sem hóspede';
+    const cleanIcon = { feita: '✅', em_andamento: '🧹', pendente: '⚠️' };
+    document.getElementById('tt-st').innerHTML =
+      `<span style="color:${STATUS_CSS[room.status]}">${STATUS_LABELS[room.status]}</span>` +
+      `&nbsp;•&nbsp;${cleanIcon[room.cleaning?.status] || ''} Limpeza ${room.cleaning?.status || '-'}`;
+  } else {
+    document.body.style.cursor = 'default';
+    tt.style.display = 'none';
+  }
+}
+
+function onClick(e) {
+  const room = getRoomFromEvent(e);
+  if (room) selectRoom(room.id);
+}
+
+function selectRoom(id) {
+  selectedRoom = id;
+  renderPanel();
+  const mesh = roomMeshes[id];
+  if (mesh) {
+    let t = 0;
+    const y0 = mesh.position.y;
+    const up = setInterval(() => {
+      t += 0.1;
+      mesh.position.y = y0 + Math.sin(t * Math.PI) * 0.5;
+      if (t >= 1) { mesh.position.y = y0; clearInterval(up); }
+    }, 16);
+  }
+}
+
+function renderPanel() {
+  if (!allData) return;
+  const list = document.getElementById('rooms-list');
+  list.innerHTML = '';
+  allData.rooms.forEach(room => {
+    const card = document.createElement('div');
+    card.className = 'room-card' + (room.id === selectedRoom ? ' selected' : '');
+    const cleanIcon = { feita: '✅ Feita', em_andamento: '🧹 Em andamento', pendente: '⚠️ Pendente' };
+    const cleanBy = room.cleaning?.by ? ` — ${room.cleaning.by}` : '';
+    const guestRow = room.guest
+      ? `<div class="room-guest">👤 ${room.guest}<br><span class="detail-row">📅 ${room.checkIn} → ${room.checkOut}</span></div>`
+      : '<div class="detail-row">Sem hóspede</div>';
+    const notesRow = room.notes
+      ? `<div class="notes-box">📌 ${room.notes}</div>` : '';
+    card.innerHTML = `
+      <div class="room-header">
+        <div>
+          <div class="room-num">Nº ${room.number} — ${room.name}</div>
+          <div class="room-name">Suíte</div>
+        </div>
+        <div class="status-badge s-${room.status}">${STATUS_LABELS[room.status]}</div>
+      </div>
+      ${guestRow}
+      <div class="cleaning-row">
+        <div>
+          <span class="clean-dot clean-${room.cleaning?.status || 'pendente'}"></span>
+          Limpeza: ${cleanIcon[room.cleaning?.status] || '—'}${cleanBy}
+        </div>
+      </div>
+      ${notesRow}
+    `;
+    card.addEventListener('click', () => selectRoom(room.id));
+    list.appendChild(card);
+  });
+}
+
+function updateStats(data) {
+  if (!data?.stats) return;
+  const s = data.stats;
+  ['disponivel','ocupado','limpeza','manutencao','reservado'].forEach(k => {
+    const el = document.getElementById('st-' + k);
+    if (el) el.textContent = s[k] || 0;
+  });
+}
+
+// --- WebSocket ---
+function connectWS() {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${protocol}//${location.host}`);
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'connected' || msg.type === 'update') {
+      allData = msg.data;
+      buildRooms(allData);
+      updateStats(allData);
+      renderPanel();
+    }
+  };
+  ws.onclose = () => setTimeout(connectWS, 3000);
+}
+
+// Labels always face camera
+function updateLabels() {
+  Object.values(roomMeshes).forEach(g => {
+    g.traverse(c => { if (c.userData.isLabel) c.lookAt(camera.position); });
+  });
+  scene.traverse(c => { if (c.userData.isLabel) c.lookAt(camera.position); });
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  updateLabels();
+  renderer.render(scene, camera);
+}
+
+initThree();
+connectWS();
+</script>
+</body>
+</html>
